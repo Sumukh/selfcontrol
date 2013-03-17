@@ -27,9 +27,7 @@
 
 - (DomainListWindowController*)init {
   if(self = [super initWithWindowNibName:@"DomainList"]) {
-  
-   // [domainListTableView_ retain];
-    
+      
     defaults_ = [NSUserDefaults standardUserDefaults];
     
     NSArray* curArray = [defaults_ arrayForKey: @"HostBlacklist"];
@@ -70,7 +68,7 @@
   unsigned int index = [selected firstIndex];
   int shift = 0;
   while (index != NSNotFound) {
-    if (index < 0 || (index - shift) >= [domainList_ count])
+    if ((index - shift) >= [domainList_ count])
       break;
     [domainList_ removeObjectAtIndex: index - shift];
     shift++;
@@ -198,23 +196,8 @@
   [defaults_ setObject: domainList_ forKey: @"HostBlacklist"];
   [aTableView reloadData];
   [[NSNotificationCenter defaultCenter] postNotificationName: @"SCConfigurationChangedNotification"
-                                                      object: self];  
+    object: self];  
 }
-
-/* - (NSCell *)tableView:(NSTableView*)tableView
-dataCellForTableColumn:(NSTableColumn *)tableColumn
-                  row:(int)row {
-  NSTextFieldCell *cell = [tableColumn dataCell];
-  
-  if(row == 0) {
-    [cell setTextColor: [NSColor redColor]];
-  } else {
-    [cell setTextColor: [NSColor blackColor]];
-  }
-  
-  return cell;
-  
-} */
 
 - (void)tableView:(NSTableView *)tableView
   willDisplayCell:(id)cell
@@ -236,7 +219,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
     
     NSArray* splitString = [str componentsSeparatedByString: @"/"];
     
-    str = [splitString objectAtIndex: 0];
+    str = [[splitString objectAtIndex: 0] lowercaseString];
     
     NSString* stringToSearchForPort = str;
     
@@ -278,6 +261,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
                                           predicateWithFormat:@"SELF MATCHES %@",
                                           hostnameValidationRegex
                                           ];
+        
       if(![hostnameRegexTester evaluateWithObject: str] && ![str isEqualToString: @"*"] && ![str isEqualToString: @""]) {
         [cell setTextColor: [NSColor redColor]];
         return;
@@ -354,7 +338,6 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 }
 
 - (void)dealloc {
- // [domainListTableView_ release];
   [super dealloc];
 }
 

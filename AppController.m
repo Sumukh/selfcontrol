@@ -26,6 +26,8 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 
 @implementation AppController
 
+@synthesize addingBlock;
+
 - (AppController*) init {
   if(self = [super init]) {
   
@@ -52,9 +54,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
     
     [defaults_ registerDefaults:appDefaults];
     
-    // blockLock_ is a lock that allows us to ensure that the user interface will
-    // be locked up while we're adding a block.
-    blockLock_ = [[NSLock alloc] init];
+    self.addingBlock = false;
     
     // refreshUILock_ is a lock that prevents a race condition by making the refreshUserInterface
     // method alter the blockIsOn variable atomically (will no longer be necessary once we can
@@ -106,17 +106,17 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   
   if(numMinutes > 0) {
     if(formatDays > 0) {
-      timeString = [NSString stringWithFormat:@"%d %@", formatDays, (formatDays == 1 ? @"day" : @"days")];
+      timeString = [NSString stringWithFormat:@"%d %@", formatDays, (formatDays == 1 ? NSLocalizedString(@"day", @"Single day time string") : NSLocalizedString(@"days", @"Plural days time string"))];
     }
     if(formatHours > 0) {
-      timeString = [NSString stringWithFormat: @"%@%@%d %@", timeString, (formatDays > 0 ? @", " : @""), formatHours, (formatHours == 1 ? @"hour" : @"hours")];
+      timeString = [NSString stringWithFormat: @"%@%@%d %@", timeString, (formatDays > 0 ? @", " : @""), formatHours, (formatHours == 1 ? NSLocalizedString(@"hour", @"Single hour time string") : NSLocalizedString(@"hours", @"Plural hours time string"))];
     }
     if(formatMinutes > 0) {
-      timeString = [NSString stringWithFormat:@"%@%@%d %@", timeString, (formatHours > 0 || formatDays > 0 ? @", " : @""), formatMinutes, (formatMinutes == 1 ? @"minute" : @"minutes")];
+      timeString = [NSString stringWithFormat:@"%@%@%d %@", timeString, (formatHours > 0 || formatDays > 0 ? @", " : @""), formatMinutes, (formatMinutes == 1 ? NSLocalizedString(@"minute", @"Single minute time string") : NSLocalizedString(@"minutes", @"Plural minutes time string"))];
     }
   }
   else {
-    timeString = @"Disabled";
+    timeString = NSLocalizedString(@"Disabled", "Shows that SelfControl is disabled");
   }
     
   [blockSliderTimeDisplayLabel_ setStringValue:timeString];
@@ -131,14 +131,6 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 
     NSLog(@"WARNING: Block started date is in the past (%@)", [defaults_ objectForKey: @"BlockStartedDate"]);
         
-   /* NSError* err = [NSError errorWithDomain: kSelfControlErrorDomain
-                                       code: -101
-                                   userInfo: [NSDictionary dictionaryWithObject: @"Error -101: Attempting to add block, but a block appears to be in progress."
-                                                                         forKey: NSLocalizedDescriptionKey]];
-    
-    [NSApp presentError: err];
-    
-    return; */
   }
   if([[defaults_ arrayForKey:@"HostBlacklist"] count] == 0) {
     // Since the Start button should be disabled when the blacklist has no entries,
@@ -156,10 +148,10 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
     
   if([defaults_ boolForKey: @"VerifyInternetConnection"] && ![self networkConnectionIsAvailable]) {
     NSAlert* networkUnavailableAlert = [[[NSAlert alloc] init] autorelease];
-    [networkUnavailableAlert setMessageText: @"No network connection detected"];
-    [networkUnavailableAlert setInformativeText:@"A block cannot be started without a working network connection.  You can override this setting in Preferences."];
-    [networkUnavailableAlert addButtonWithTitle: @"Cancel"];
-    [networkUnavailableAlert addButtonWithTitle: @"Network Diagnostics..."];
+    [networkUnavailableAlert setMessageText: NSLocalizedString(@"No network connection detected", "No network connection detected message")];
+    [networkUnavailableAlert setInformativeText:NSLocalizedString(@"A block cannot be started without a working network connection.  You can override this setting in Preferences.", @"Message when network connection is unavailable")];
+    [networkUnavailableAlert addButtonWithTitle: NSLocalizedString(@"Cancel", "Cancel button")];
+    [networkUnavailableAlert addButtonWithTitle: NSLocalizedString(@"Network Diagnostics...", @"Network Diagnostics button")];
     if([networkUnavailableAlert runModal] == NSAlertFirstButtonReturn)
       return;
     
@@ -177,7 +169,11 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 }
 
 - (void)refreshUserInterface {
-  [refreshUILock_ lock];
+  if(![refreshUILock_ tryLock]) {
+    // already refreshing the UI, no need to wait and do it again
+    return;
+  }
+  
   BOOL blockWasOn = blockIsOn;
   blockIsOn = [self selfControlLaunchDaemonIsLoaded];
   
@@ -209,9 +205,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
       
     [self updateTimeSliderDisplay: blockDurationSlider_];
         
-    // We check whether a block is currently being added by trying to lock
-    // blockLock_.
-    BOOL addBlockIsOngoing = ![blockLock_ tryLock];
+    BOOL addBlockIsOngoing = self.addingBlock;
     
     if([blockDurationSlider_ intValue] != 0 && [[defaults_ objectForKey: @"HostBlacklist"] count] != 0 && !addBlockIsOngoing)
       [submitButton_ setEnabled: YES];
@@ -222,34 +216,21 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
     if(!addBlockIsOngoing) {
       [blockDurationSlider_ setEnabled: YES];
       [editBlacklistButton_ setEnabled: YES];
-      [submitButton_ setTitle: @"Start"];
+      [submitButton_ setTitle: NSLocalizedString(@"Start", @"Start button")];
     }
     else {
       [blockDurationSlider_ setEnabled: NO];
       [editBlacklistButton_ setEnabled: NO];
-      [submitButton_ setTitle: @"Loading"];
-    }
-    
-    // Unlock blockLock_ if we locked it
-    if(!addBlockIsOngoing) {
-      [blockLock_ unlock];
+      [submitButton_ setTitle: NSLocalizedString(@"Loading", @"Loading button")];
     }
   }
   [refreshUILock_ unlock];
 }
 
 - (void)showTimerWindow {
-  if(timerWindowController_ == nil) {
-     unsigned int major, minor, bugfix;
-     
-    [SelfControlUtilities getSystemVersionMajor: &major minor: &minor bugFix: &bugfix];
-    
-    if(major <= 10 && minor < 5)
-      [NSBundle loadNibNamed: @"TigerTimerWindow" owner: self];
-    else
-      [NSBundle loadNibNamed: @"TimerWindow" owner: self];
-  }
-  else {
+  if(timerWindowController_ == nil) {    
+    [NSBundle loadNibNamed: @"TimerWindow" owner: self];
+  } else {
     [[timerWindowController_ window] makeKeyAndOrderFront: self];
     [[timerWindowController_ window] center];
   }
@@ -293,7 +274,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 
 - (BOOL)selfControlLaunchDaemonIsLoaded {
   // First we check the host file, and see if a block is in there
-  NSString* hostFileContents = [NSString stringWithContentsOfFile: @"/etc/hosts"];
+  NSString* hostFileContents = [NSString stringWithContentsOfFile: @"/etc/hosts" encoding: NSUTF8StringEncoding error: NULL];
   if(hostFileContents != nil && [hostFileContents rangeOfString: @"# BEGIN SELFCONTROL BLOCK"].location != NSNotFound) {
     return YES;
   }
@@ -313,19 +294,14 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 }
 
 - (IBAction)showDomainList:(id)sender {
-  // We check whether a block is currently being added by trying to lock
-  // blockLock_.
-  BOOL addBlockIsOngoing = ![blockLock_ tryLock];
+  BOOL addBlockIsOngoing = self.addingBlock;
   if([self selfControlLaunchDaemonIsLoaded] || addBlockIsOngoing) {
     NSAlert* blockInProgressAlert = [[[NSAlert alloc] init] autorelease];
-    [blockInProgressAlert setMessageText: @"Block in progress"];
-    [blockInProgressAlert setInformativeText:@"The blacklist cannot be edited while a block is in progress."];
-    [blockInProgressAlert addButtonWithTitle: @"OK"];
+    [blockInProgressAlert setMessageText: NSLocalizedString(@"Block in progress", @"Block in progress error title")];
+    [blockInProgressAlert setInformativeText:NSLocalizedString(@"The blacklist cannot be edited while a block is in progress.", @"Block in progress explanation")];
+    [blockInProgressAlert addButtonWithTitle: NSLocalizedString(@"OK", @"OK button")];
     [blockInProgressAlert runModal];
-    
-    if(!addBlockIsOngoing)
-      [blockLock_ unlock];
-    
+        
     return;
   }
   
@@ -333,9 +309,6 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
     [NSBundle loadNibNamed: @"DomainList" owner: self];
   else
     [[domainListWindowController_ window] makeKeyAndOrderFront: self];
-  
-  if(!addBlockIsOngoing)
-    [blockLock_ unlock];
 }
 
 - (void)closeDomainList {
@@ -416,7 +389,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   if([host isEqualToString: @""])
     return;
   
-  NSMutableArray* list = [[defaults_ arrayForKey: @"HostBlacklist"] mutableCopy];
+  NSMutableArray* list = [[[defaults_ arrayForKey: @"HostBlacklist"] mutableCopy] autorelease];
   [list addObject: host];
   [defaults_ setObject: list forKey: @"HostBlacklist"];
   [defaults_ synchronize];
@@ -429,7 +402,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
     [self refreshUserInterface];
     
     // Reverse the blacklist change made before we fail
-    NSMutableArray* list = [[defaults_ arrayForKey: @"HostBlacklist"] mutableCopy];
+    NSMutableArray* list = [[[defaults_ arrayForKey: @"HostBlacklist"] mutableCopy] autorelease];
     [list removeLastObject];
     [defaults_ setObject: list forKey: @"HostBlacklist"];
     
@@ -445,10 +418,10 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   
   if([defaults_ boolForKey: @"VerifyInternetConnection"] && ![self networkConnectionIsAvailable]) {
     NSAlert* networkUnavailableAlert = [[[NSAlert alloc] init] autorelease];
-    [networkUnavailableAlert setMessageText: @"No network connection detected"];
-    [networkUnavailableAlert setInformativeText:@"A block cannot be started without a working network connection.  You can override this setting in Preferences."];
-    [networkUnavailableAlert addButtonWithTitle: @"Cancel"];
-    [networkUnavailableAlert addButtonWithTitle: @"Network Diagnostics..."];
+    [networkUnavailableAlert setMessageText: NSLocalizedString(@"No network connection detected", "No network connection detected message")];
+    [networkUnavailableAlert setInformativeText:NSLocalizedString(@"A block cannot be started without a working network connection.  You can override this setting in Preferences.", @"Message when network connection is unavailable")];
+    [networkUnavailableAlert addButtonWithTitle: NSLocalizedString(@"Cancel", "Cancel button")];
+    [networkUnavailableAlert addButtonWithTitle: NSLocalizedString(@"Network Diagnostics...", @"Network Diagnostics button")];
     if([networkUnavailableAlert runModal] == NSAlertFirstButtonReturn) {
       // User clicked cancel
       // Reverse the blacklist change made before we fail
@@ -576,8 +549,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 
 - (void)installBlock {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-  // Lock blockLock_ so that refreshUserInterface knows to disable buttons.
-  [blockLock_ lock];
+  self.addingBlock = true;
   [self refreshUserInterface];
   AuthorizationRef authorizationRef;
   char* helperToolPath = [self selfControlHelperToolPathUTF8String];
@@ -604,7 +576,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   
   if(status) {
     NSLog(@"ERROR: Failed to authorize block start.");
-    [blockLock_ unlock];
+    self.addingBlock = false;
     [self refreshUserInterface];
     return;
   }
@@ -624,16 +596,18 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
                                               &commPipe);
   
   if(status) {
-    NSLog(@"WARNING: Authorized execution of helper tool returned failure status code %d", status);
+    NSLog(@"WARNING: Authorized execution of helper tool returned failure status code %ld", status);
     
     NSError* err = [NSError errorWithDomain: kSelfControlErrorDomain
                                        code: status
-                                   userInfo: [NSDictionary dictionaryWithObject: [NSString stringWithFormat: @"Error %d received from the Security Server.", status]
+                                   userInfo: [NSDictionary dictionaryWithObject: [NSString stringWithFormat: @"Error %ld received from the Security Server.", status]
                                                                          forKey: NSLocalizedDescriptionKey]];
     
-    [NSApp presentError: err];
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
     
-    [blockLock_ unlock];
+    self.addingBlock = false;
     [self refreshUserInterface];
     
     return;
@@ -653,7 +627,9 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
                                    userInfo: [NSDictionary dictionaryWithObject: @"Error -104: The helper tool crashed.  This may cause unexpected errors."
                                                                          forKey: NSLocalizedDescriptionKey]];
     
-    [NSApp presentError: err];
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
   }
   
   int exitCode = [inDataString intValue];
@@ -661,17 +637,21 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   if(exitCode) {
     NSError* err = [self errorFromHelperToolStatusCode: exitCode];
     
-    [NSApp presentError: err];    
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
   }  
   
-  [blockLock_ unlock];
+  self.addingBlock = false;
   [self refreshUserInterface];
   [pool drain];
 }
 
 - (void)refreshBlock:(NSLock*)lockToUse {
-  if(![lockToUse tryLock])
+  if(![lockToUse tryLock]) {
     return;
+  }
+  
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   AuthorizationRef authorizationRef;
   char* helperToolPath = [self selfControlHelperToolPathUTF8String];
@@ -724,11 +704,13 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
                                               &commPipe);
   
   if(status) {
-    NSLog(@"WARNING: Authorized execution of helper tool returned failure status code %d", status);
+    NSLog(@"WARNING: Authorized execution of helper tool returned failure status code %ld", status);
     
     NSError* err = [self errorFromHelperToolStatusCode: status];
     
-    [NSApp presentError: err];
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
     
     [lockToUse unlock];
     
@@ -746,7 +728,9 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
                                    userInfo: [NSDictionary dictionaryWithObject: @"Error -105: The helper tool crashed.  This may cause unexpected errors."
                                                                          forKey: NSLocalizedDescriptionKey]];
     
-    [NSApp presentError: err];
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
   }  
   
   int exitCode = [inDataString intValue];
@@ -754,23 +738,14 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
   if(exitCode) {
     NSError* err = [self errorFromHelperToolStatusCode: exitCode];
     
-    [NSApp presentError: err];    
+    [NSApp performSelectorOnMainThread: @selector(presentError:)
+                            withObject: err
+                         waitUntilDone: YES];
   }  
     
   [timerWindowController_ closeAddSheet: self];
   [pool drain];
   [lockToUse unlock];
-}
-
-- (BOOL)isTiger {
-  unsigned int major, minor, bugfix;
-  
-  [SelfControlUtilities getSystemVersionMajor: &major minor: &minor bugFix: &bugfix];
-  
-  if(major <= 10 && minor < 5)
-    return YES;
-  else
-    return NO;
 }
 
 - (IBAction)save:(id)sender {
@@ -804,7 +779,7 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
       NSBeep();
     } else {
       NSDictionary* attribs = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool: YES], NSFileExtensionHidden, nil];
-      [[NSFileManager defaultManager] changeFileAttributes: attribs atPath: [sp filename]];
+      [[NSFileManager defaultManager] setAttributes: attribs ofItemAtPath: [sp filename] error: NULL];
     }
   }
 }
@@ -858,12 +833,17 @@ NSString* const kSelfControlErrorDomain = @"SelfControlErrorDomain";
 
 - (void)setBlockLength:(int)blockLength {
   [blockDurationSlider_ setIntValue: blockLength];
-  [self updateTimeSliderDisplay];
+  [self updateTimeSliderDisplay: blockDurationSlider_];
+}
+
+- (IBAction)openFAQ:(id)sender {
+    NSURL *url=[NSURL URLWithString: @"https://github.com/slambert/selfcontrol/wiki/FAQ"];
+    [[NSWorkspace sharedWorkspace] openURL: url];
 }
 
 - (void)switchedToWhitelist:(id)sender {
   if(![defaults_ boolForKey: @"WhitelistAlertSuppress"]) {
-    NSAlert* a = [NSAlert alertWithMessageText: @"Are you sure you want a whitelist block?" defaultButton: @"OK" alternateButton: @"" otherButton: @"" informativeTextWithFormat: @"A whitelist block means that everything on the internet BESIDES your specified list will be blocked.  This includes the web, email, SSH, and anything else your computer accesses via the internet.  If a web site requires resources such as images or scripts from a site that is not on your whitelist, the site may not work properly."]; 
+    NSAlert* a = [NSAlert alertWithMessageText: NSLocalizedString(@"Are you sure you want a whitelist block?", @"Whitelist block confirmation prompt") defaultButton: NSLocalizedString(@"OK", @"OK button") alternateButton: @"" otherButton: @"" informativeTextWithFormat: NSLocalizedString(@"A whitelist block means that everything on the internet BESIDES your specified list will be blocked.  This includes the web, email, SSH, and anything else your computer accesses via the internet.  If a web site requires resources such as images or scripts from a site that is not on your whitelist, the site may not work properly.", @"Whitelist block explanation")]; 
     if([a respondsToSelector: @selector(setShowsSuppressionButton:)]) {
       [a setShowsSuppressionButton: YES];
     }
