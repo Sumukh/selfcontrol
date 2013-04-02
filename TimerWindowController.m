@@ -1,4 +1,4 @@
-
+ 
 //
 //  TimerWindowController.m
 //  SelfControl
@@ -23,10 +23,11 @@
 
 
 #import "TimerWindowController.h"
-
+#import "AppController.h"
 @implementation TimerWindowController
 
 - (TimerWindowController*) init {
+<<<<<<< HEAD
     [super init];
     unsigned int major, minor, bugfix;
     
@@ -43,120 +44,32 @@
         isLion = YES;
 
     
+=======
+  if(self = [super init]) {
+>>>>>>> Status Bar
     // We need a block to prevent us from running multiple copies of the "Add to Block"
     // sheet.
     addToBlockLock = [[NSLock alloc] init];
-    
+        
     numStrikes = 0;
-    
-    return self;
+      [statusMenu addItem:timeleft];
+
+  }
+
+  return self;
 }
 
 - (void)awakeFromNib {
-    [[self window] center];
-    [[self window] makeKeyAndOrderFront: self];
-    
-    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
-    
-    NSWindow* window = [self window];
-    
-    [window center];
-    
-    if([defaults boolForKey:@"TimerWindowFloats"])
-        [window setLevel: NSFloatingWindowLevel];
-    else
-        [window setLevel: NSNormalWindowLevel];
-    
-    [window setHidesOnDeactivate: NO];
-    
-    [window makeKeyAndOrderFront: self];
-    
-    NSDictionary* lockDict = [NSDictionary dictionaryWithContentsOfFile: SelfControlLockFilePath];
-    
-    NSDate* beginDate = [lockDict objectForKey:@"BlockStartedDate"];
-    NSTimeInterval blockDuration = [[lockDict objectForKey:@"BlockDuration"] intValue] * 60;
-    
-    if(beginDate == nil || [beginDate isEqualToDate: [NSDate distantFuture]]
-       || blockDuration < 1) {
-        beginDate = [defaults objectForKey:@"BlockStartedDate"];
-        blockDuration = [defaults integerForKey:@"BlockDuration"] * 60;
-    }
-    
-    // It is KEY to retain the block ending date , if you forget to retain it
-    // you'll end up with a nasty program crash.
-    if(blockDuration)
-        blockEndingDate_ = [[beginDate addTimeInterval: blockDuration] retain];
-    else
-        // If the block duration is 0, the ending date is... now!
-        blockEndingDate_ = [[NSDate date] retain];
-    [self updateTimerDisplay: nil];
-    timerUpdater_ = [NSTimer scheduledTimerWithTimeInterval: 1.0
-                                                     target: self
-                                                   selector: @selector(updateTimerDisplay:)
-                                                   userInfo: nil
-                                                    repeats: YES];
-}
+  [[self window] center];
+  [[self window] makeKeyAndOrderFront: self];
 
-/* - (void)reloadTimer {  
- NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];  
- 
- NSDictionary* lockDict = [NSDictionary dictionaryWithContentsOfFile: SelfControlLockFilePath];
- 
- if([[lockDict objectForKey: @"BlockAsWhitelist"] boolValue])
- [addToBlockButton_ setEnabled: NO];
- else
- [addToBlockButton_ setEnabled: YES];  
- 
- NSDate* beginDate = [lockDict objectForKey:@"BlockStartedDate"];
- NSTimeInterval blockDuration = [[lockDict objectForKey:@"BlockDuration"] intValue] * 60;
- 
- if(beginDate == nil || [beginDate isEqualToDate: [NSDate distantFuture]]
- || blockDuration <= 0) {
- beginDate = [defaults objectForKey:@"BlockStartedDate"];
- blockDuration = [defaults integerForKey:@"BlockDuration"] * 60;
- } else {
- [defaults setObject: beginDate forKey: @"BlockStartedDate"];
- [defaults setObject: [NSNumber numberWithFloat: (blockDuration / 60)] forKey: @"BlockDuration"];
- }
- 
- [blockEndingDate_ release];
- if(blockDuration)
- blockEndingDate_ = [[beginDate addTimeInterval: blockDuration] retain];
- else
- blockEndingDate_ = [[NSDate date] retain];
- 
- // Yes, I'm aware the timer should be invalidated.  Something deep inside broke
- // every time I tried that.
- 
- [timerUpdater_ invalidate];
- timerUpdater_ = nil;
- 
- timerUpdater_ = [NSTimer scheduledTimerWithTimeInterval: 1.0
- target: self
- selector: @selector(updateTimerDisplay:)
- userInfo: nil
- repeats: YES];
- 
- [self updateTimerDisplay: timerUpdater_];
- } */
+  NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+  
+  NSWindow* window = [self window];
+        
+  [window center];
 
-- (void)blockEnded {
-    if(![[NSApp delegate] selfControlLaunchDaemonIsLoaded]) {
-        [timerUpdater_ invalidate];
-        timerUpdater_ = nil;
-        
-        [timerLabel_ setStringValue: @"Block not active"];
-        [timerLabel_ setFont: [[NSFontManager sharedFontManager]
-                               convertFont: [timerLabel_ font]
-                               toSize: 37]
-         ];
-        
-        [timerLabel_ sizeToFit];
-        
-        [self resetStrikes];
-    }
-}
-
+<<<<<<< HEAD
 - (void)updateTimerDisplay:(NSTimer*)timer {  
     int numSeconds = (int) [blockEndingDate_ timeIntervalSinceNow];
     int numHours;
@@ -177,34 +90,148 @@
            // NSLog(@"WARNING: Block should have ended four seconds ago, starting scheckup");
             [self runCheckup];
         }
+=======
+
+
+  if([defaults boolForKey:@"TimerWindowFloats"])
+    [window setLevel: NSFloatingWindowLevel];
+  else
+    [window setLevel: NSNormalWindowLevel];
+  
+  [window setHidesOnDeactivate: NO];
+  
+  [window makeKeyAndOrderFront: self];
+  
+  NSDictionary* lockDict = [NSDictionary dictionaryWithContentsOfFile: SelfControlLockFilePath];
+      
+  NSDate* beginDate = [lockDict objectForKey:@"BlockStartedDate"];
+  NSTimeInterval blockDuration = [[lockDict objectForKey:@"BlockDuration"] intValue] * 60;
+>>>>>>> Status Bar
         
-        return;
-    }
+
+  if(beginDate == nil || [beginDate isEqualToDate: [NSDate distantFuture]]
+     || blockDuration < 1) {
+    beginDate = [defaults objectForKey:@"BlockStartedDate"];
+    blockDuration = [defaults integerForKey:@"BlockDuration"] * 60;
+  }
     
-    numHours = (numSeconds / 3600);
-    numSeconds %= 3600;
-    numMinutes = (numSeconds / 60);
-    numSeconds %= 60;
     
+<<<<<<< HEAD
 
     
     NSString* timeString = [NSString stringWithFormat: @"%0.2d:%0.2d:%0.2d",
                             numHours,
                             numMinutes,
                             numSeconds];
+=======
+  
+  // It is KEY to retain the block ending date , if you forget to retain it
+  // you'll end up with a nasty program crash.
+  if(blockDuration)
+    blockEndingDate_ = [[beginDate addTimeInterval: blockDuration] retain];
+  else
+    // If the block duration is 0, the ending date is... now!
+    blockEndingDate_ = [[NSDate date] retain];
+  
+  [self updateTimerDisplay: nil];
+
+  timerUpdater_ = [NSTimer timerWithTimeInterval: 1.0
+                                                   target: self
+                                                 selector: @selector(updateTimerDisplay:)
+                                                 userInfo: nil
+                                                  repeats: YES];
+
+	//If the dialog isn't focused, instead of getting a NSTimer, we get null.
+	//Scheduling the timer from the main thread seems to work.
+	[self performSelectorOnMainThread: @selector(hackAroundMainThreadtimer:) withObject: timerUpdater_ waitUntilDone: YES];
+	
+	
+}
+
+
+
+- (void)blockEnded {
+  if(![[NSApp delegate] selfControlLaunchDaemonIsLoaded]) {
+    [timerUpdater_ invalidate];
+    timerUpdater_ = nil;
+>>>>>>> Status Bar
     
-    [timerLabel_ setStringValue: timeString];
+    [timerLabel_ setStringValue: NSLocalizedString(@"Block not active", @"block not active string")];
     [timerLabel_ setFont: [[NSFontManager sharedFontManager]
                            convertFont: [timerLabel_ font]
-                           toSize: 42]
+                           toSize: 37]
      ];
    //this NSLog is pretty bad since it runs every second
     //NSLog(@"set string numSeconds <  0 %d",numSeconds);
 
     
     [timerLabel_ sizeToFit];
-    [self resetStrikes];
     
+    [self resetStrikes];
+  }
+}
+
+
+- (void)hackAroundMainThreadtimer:(NSTimer*)timer{
+	[[NSRunLoop currentRunLoop] addTimer: timer forMode: NSDefaultRunLoopMode];
+}
+
+- (void)updateTimerDisplay:(NSTimer*)timer {
+  // update UI for the whole app, in case the block is done with
+  [[NSApp delegate] performSelectorOnMainThread: @selector(refreshUserInterface)
+                                     withObject: nil waitUntilDone: NO];
+  
+  int numSeconds = (int) [blockEndingDate_ timeIntervalSinceNow];
+  int numHours;
+  int numMinutes;
+  
+  if(numSeconds < 0) {
+    [[NSApp dockTile] setBadgeLabel: nil];
+      NSStatusBar *bar =[NSStatusBar systemStatusBar];
+      [bar removeStatusItem:statusItem];
+      
+
+
+    // This increments the strike counter.  After four strikes of the timer being
+    // at or less than 0 seconds, SelfControl will assume something's wrong and run
+    // scheckup.
+    numStrikes++;
+        
+    if(numStrikes == 2) {
+      NSLog(@"WARNING: Block should have ended two seconds ago, starting scheckup");
+      [self runCheckup];
+    } else if(numStrikes == 30) {
+        // OK, so apparently scheckup couldn't remove the block either
+        // The user needs some help, let's open the FAQ for them.
+        NSLog(@"WARNING: Block should have ended thirty seconds ago! Probable permablock.");
+        [[NSApp delegate] openFAQ: self];
+    }
+    
+    return;
+  }
+  
+  numHours = (numSeconds / 3600);
+  numSeconds %= 3600;
+  numMinutes = (numSeconds / 60);
+  numSeconds %= 60;
+  
+  NSString* timeString = [NSString stringWithFormat: @"%0.2d:%0.2d:%0.2d",
+                                                    numHours,
+                                                    numMinutes,
+                                                    numSeconds];
+  
+  [timerLabel_ setStringValue: timeString];
+
+  [timerLabel_ setFont: [[NSFontManager sharedFontManager]
+                        convertFont: [timerLabel_ font]
+                        toSize: 42]
+   ];
+    [timeleft setTitle: timeString];
+
+  [timerLabel_ sizeToFit];
+  [self resetStrikes];
+    
+<<<<<<< HEAD
     if(isLeopard && [[NSUserDefaults standardUserDefaults] boolForKey: @"BadgeApplicationIcon"]) {
         // We want to round up the minutes--standard when we aren't displaying seconds.
         if(numSeconds > 0 && numMinutes != 59)
@@ -238,9 +265,34 @@
 
         [[NSApp dockTile] setBadgeLabel: nil];
 
-    }
-}
+=======
+    
 
+  if([[NSUserDefaults standardUserDefaults] boolForKey: @"BadgeApplicationIcon"]) {
+    // We want to round up the minutes--standard when we aren't displaying seconds.
+    if(numSeconds > 0 && numMinutes != 59) {
+      numMinutes++;
+>>>>>>> Status Bar
+    }
+    
+    NSString* badgeString = [NSString stringWithFormat: @"%0.2d:%0.2d",numHours,numMinutes];
+      
+    NSString* menuString = [NSString stringWithFormat: @"Time Left: %0.2d:%0.2d",numHours,numMinutes];
+//Update defaults to send time to the statusbar
+      [[NSUserDefaults standardUserDefaults] setValue:menuString forKey:@"timeleft"];
+      
+    [[NSApp dockTile] setBadgeLabel: badgeString];
+  //    [statusItem setTitle:menuString];
+      
+  //    [statusItem setTitle:badgeString];
+  } else {
+    // If we aren't using badging, set the badge string to be
+    // empty to remove any badge if there is one.
+    [[NSApp dockTile] setBadgeLabel: nil];
+      
+
+
+<<<<<<< HEAD
 - (void)windowShouldClose:(NSNotification *)notification {
     // Hack to make the application terminate after the last window is closed, but
     // INCLUDE the HUD-style timer window.
@@ -265,24 +317,52 @@
     
     [addToBlockLock unlock];  
 
+=======
+  }
+}
+
+- (void)windowShouldClose:(NSNotification *)notification {
+  // Hack to make the application terminate after the last window is closed, but
+  // INCLUDE the HUD-style timer window.
+  if(![[[NSApp delegate] initialWindow] isVisible]) {
+    [NSApp terminate: self];
+  }
+}
+
+- (IBAction) addToBlock:(id)sender {  
+  // Check if there's already a thread trying to add a host.  If so, don't make
+  // another.
+  if(![addToBlockLock tryLock]) {
+    return;
+  }
+  
+  [NSApp beginSheet: addSheet_
+     modalForWindow: [self window]
+      modalDelegate: self
+     didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
+        contextInfo: nil];
+  
+  [addToBlockLock unlock];  
+>>>>>>> Status Bar
 }
 
 - (IBAction) closeAddSheet:(id)sender {
-    [NSApp endSheet: addSheet_];
+  [NSApp endSheet: addSheet_];
 }
 
 - (IBAction) performAdd:(id)sender {
-    NSString* addToBlockTextFieldContents = [addToBlockTextField_ stringValue];
-    [[NSApp delegate] addToBlockList: addToBlockTextFieldContents lock: addToBlockLock];
-    [NSApp endSheet: addSheet_];
+  NSString* addToBlockTextFieldContents = [addToBlockTextField_ stringValue];
+  [[NSApp delegate] addToBlockList: addToBlockTextFieldContents lock: addToBlockLock];
+  [NSApp endSheet: addSheet_];
 }
 
 - (void)didEndSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
-    [sheet orderOut:self];  
+  [sheet orderOut:self];  
 }
 
 // see updateTimerDisplay: for an explanation
 - (void)resetStrikes {
+<<<<<<< HEAD
     numStrikes = 0;
    // NSLog(@"Resetting Strikes ");
 
@@ -293,13 +373,20 @@
     [self resetStrikes];
   //  NSLog(@"Running Checkup ");
 
+=======
+  numStrikes = 0;
+}
+
+- (void)runCheckup {
+  [NSTask launchedTaskWithLaunchPath: @"/Library/PrivilegedHelperTools/scheckup" arguments: [NSArray array]];
+>>>>>>> Status Bar
 }
 
 - (void)dealloc {
-    [addToBlockLock release];
-    [timerUpdater_ invalidate];
-    timerUpdater_ = nil;
-    [super dealloc];
+  [addToBlockLock release];
+  [timerUpdater_ invalidate];
+  timerUpdater_ = nil;
+  [super dealloc];
 }
 
 @end

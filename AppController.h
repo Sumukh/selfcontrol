@@ -40,17 +40,26 @@
   IBOutlet id initialWindow_;
   IBOutlet id domainListMenuItem_;
   IBOutlet id editBlacklistButton_;
-  IBOutlet DomainListWindowController* domainListWindowController_;
+   IBOutlet NSStatusItem *statusItem;
+    IBOutlet NSMenu *statusMenu2;
+    IBOutlet NSMenuItem *currentStatus;
+
+    IBOutlet DomainListWindowController* domainListWindowController_;
   IBOutlet TimerWindowController* timerWindowController_;
   NSUserDefaults* defaults_;
-  NSLock* blockLock_;
   NSLock* refreshUILock_;
   BOOL blockIsOn;
+  BOOL addingBlock;
 }
+
+@property (assign) BOOL addingBlock;
 
 // Returns an autoreleased instance of the path to the helper tool inside
 // SelfControl's bundle
 - (NSString*)selfControlHelperToolPath;
+
+//For the StatusBar
+- (IBAction)statusBarClicked:(id)sender;
 
 // Returns as a UTF-8 encoded C-string the path to the helper tool inside
 // SelfControl's bundle
@@ -123,10 +132,6 @@
 // as a separate thread.
 - (void)refreshBlock:(NSLock*)lockToUse;
 
-// Checks the system version and returns YES if the system version is Tiger (10.4)
-// or NO if it is a later version.
-- (BOOL)isTiger;
-
 // Opens a save panel and saves the blocklist.
 - (IBAction)save:(id)sender;
 
@@ -142,6 +147,8 @@
 - (int)blockLength;
 
 - (void)setBlockLength:(int)blockLength;
+
+- (IBAction)openFAQ:(id)sender;
 
 - (void)switchedToWhitelist:(id)sender;
 

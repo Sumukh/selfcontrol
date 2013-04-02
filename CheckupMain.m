@@ -25,11 +25,7 @@ int main(int argc, char* argv[]) {
   
   if(blockStartedDate == nil || [[NSDate distantFuture] isEqualToDate: blockStartedDate] || blockDuration < 1) {    
     // The lock file seems to be broken.  Try defaults.
-      
-#ifdef DEBUG
-      NSLog(@"WARNING: Lock file unreadable or invalid");
-#endif
-
+    NSLog(@"WARNING: Lock file unreadable or invalid");
     [NSUserDefaults resetStandardUserDefaults];
     seteuid(getuid());
     defaults = [NSUserDefaults standardUserDefaults];
@@ -42,8 +38,7 @@ int main(int argc, char* argv[]) {
     
     if(blockStartedDate == nil || [[NSDate distantFuture] isEqualToDate: blockStartedDate] || blockDuration < 1) {    
       // Defaults is broken too!  Let's get out of here!
-        
-      //NSLog(@"WARNING: Checkup ran but no block found.  Attempting to remove block.");
+      NSLog(@"WARNING: Checkup ran but no block found.  Attempting to remove block.");
       
       // get rid of this block
       removeBlock(getuid());
@@ -60,15 +55,7 @@ int main(int argc, char* argv[]) {
     
   if( blockStartedDate == nil || blockDuration < 1 || [[NSDate distantFuture] isEqualToDate: blockStartedDate] || timeSinceStarted >= blockDuration) {
     NSLog(@"INFO: Checkup helper ran, block expired, removing block.");            
-    
-#ifdef DEBUG
-    NSLog(@"BLOCK EXPIRED DUE TO CONDITIONS:");
-    NSLog(@"blockStartedDate == nil: %d", blockStartedDate == nil);
-    NSLog(@"[[NSDate distantFuture] isEqualToDate: blockStartedDate]: %d", [[NSDate distantFuture] isEqualToDate: blockStartedDate]);
-    NSLog(@"timeSinceStarted >= blockDuration: %d", timeSinceStarted >= blockDuration);
-    NSLog(@"END CONDITIONS");
-#endif
-    
+        
     removeBlock(getuid());
   }  
     
