@@ -27,26 +27,7 @@
 @implementation TimerWindowController
 
 - (TimerWindowController*) init {
-<<<<<<< HEAD
-    [super init];
-    unsigned int major, minor, bugfix;
-    
-    [SelfControlUtilities getSystemVersionMajor: &major minor: &minor bugFix: &bugfix];
-    
-    if(major <= 10 && minor < 5)
-        isLeopard = NO;
-    else
-        isLeopard = YES;
-    
-    if(major <= 10 && minor < 7)
-        isLion = NO;
-    else
-        isLion = YES;
-
-    
-=======
   if(self = [super init]) {
->>>>>>> Status Bar
     // We need a block to prevent us from running multiple copies of the "Add to Block"
     // sheet.
     addToBlockLock = [[NSLock alloc] init];
@@ -69,28 +50,6 @@
         
   [window center];
 
-<<<<<<< HEAD
-- (void)updateTimerDisplay:(NSTimer*)timer {  
-    int numSeconds = (int) [blockEndingDate_ timeIntervalSinceNow];
-    int numHours;
-    int numMinutes;
-    
-    if(numSeconds < 0) {
-        if(isLeopard)
-            //setting it to nil instead of @""
-            [[NSApp dockTile] setBadgeLabel: nil];    
-       // NSLog(@"on leopard Setting Badge Label to Nothing after completion %d",numSeconds);
-
-        // This increments the strike counter.  After four strikes of the timer being
-        // at or less than 0 seconds, SelfControl will assume something's wrong and run
-        // scheckup.
-        numStrikes++;
-        
-        if(numStrikes >= 4) {
-           // NSLog(@"WARNING: Block should have ended four seconds ago, starting scheckup");
-            [self runCheckup];
-        }
-=======
 
 
   if([defaults boolForKey:@"TimerWindowFloats"])
@@ -106,7 +65,6 @@
       
   NSDate* beginDate = [lockDict objectForKey:@"BlockStartedDate"];
   NSTimeInterval blockDuration = [[lockDict objectForKey:@"BlockDuration"] intValue] * 60;
->>>>>>> Status Bar
         
 
   if(beginDate == nil || [beginDate isEqualToDate: [NSDate distantFuture]]
@@ -116,14 +74,6 @@
   }
     
     
-<<<<<<< HEAD
-
-    
-    NSString* timeString = [NSString stringWithFormat: @"%0.2d:%0.2d:%0.2d",
-                            numHours,
-                            numMinutes,
-                            numSeconds];
-=======
   
   // It is KEY to retain the block ending date , if you forget to retain it
   // you'll end up with a nasty program crash.
@@ -154,16 +104,12 @@
   if(![[NSApp delegate] selfControlLaunchDaemonIsLoaded]) {
     [timerUpdater_ invalidate];
     timerUpdater_ = nil;
->>>>>>> Status Bar
     
     [timerLabel_ setStringValue: NSLocalizedString(@"Block not active", @"block not active string")];
     [timerLabel_ setFont: [[NSFontManager sharedFontManager]
                            convertFont: [timerLabel_ font]
                            toSize: 37]
      ];
-   //this NSLog is pretty bad since it runs every second
-    //NSLog(@"set string numSeconds <  0 %d",numSeconds);
-
     
     [timerLabel_ sizeToFit];
     
@@ -231,48 +177,12 @@
   [timerLabel_ sizeToFit];
   [self resetStrikes];
     
-<<<<<<< HEAD
-    if(isLeopard && [[NSUserDefaults standardUserDefaults] boolForKey: @"BadgeApplicationIcon"]) {
-        // We want to round up the minutes--standard when we aren't displaying seconds.
-        if(numSeconds > 0 && numMinutes != 59)
-            numMinutes++;
-        //NSLog(@"Seconds left > 0  %d",numSeconds);
-
-        NSString* badgeString = [NSString stringWithFormat: @"%0.2d:%0.2d",
-                                 numHours,
-                                 numMinutes];
-        
-        //fix to make it have no badge in lion, 
-        //correction/ Now not as overzealous. 
-        if(isLion) {
-        [[NSApp dockTile] setBadgeLabel: badgeString];
-           // NSLog(@"On Lion: Set BadgeString to BadgeString %d",numSeconds);
-         //   NSLog(@"On Lion: Set BadgeString to BadgeString: %@",badgeString);
-
-
-        }
-        else {
-        [[NSApp dockTile] setBadgeLabel: badgeString];
-      //      NSLog(@"Not on Lion, setting badgestring %@",badgeString);
-
-        }
-
-
-    } else if(isLeopard) {
-        // If we're on Leopard but aren't using badging, set the badge string to be
-        // empty to remove any badge if there is one.
-    //    NSLog(@"Set the string to be nil, remove any badge if there is one %d",numSeconds);
-
-        [[NSApp dockTile] setBadgeLabel: nil];
-
-=======
     
 
   if([[NSUserDefaults standardUserDefaults] boolForKey: @"BadgeApplicationIcon"]) {
     // We want to round up the minutes--standard when we aren't displaying seconds.
     if(numSeconds > 0 && numMinutes != 59) {
       numMinutes++;
->>>>>>> Status Bar
     }
     
     NSString* badgeString = [NSString stringWithFormat: @"%0.2d:%0.2d",numHours,numMinutes];
@@ -292,32 +202,6 @@
       
 
 
-<<<<<<< HEAD
-- (void)windowShouldClose:(NSNotification *)notification {
-    // Hack to make the application terminate after the last window is closed, but
-    // INCLUDE the HUD-style timer window.
-    if(![[[NSApp delegate] initialWindow] isVisible]) {
-        [NSApp terminate: self];
-        
-
-    }
-}
-
-- (IBAction) addToBlock:(id)sender {  
-    // Check if there's already a thread trying to add a host.  If so, don't make
-    // another.
-    if(![addToBlockLock tryLock])
-        return;
-    
-    [NSApp beginSheet: addSheet_
-       modalForWindow: [self window]
-        modalDelegate: self
-       didEndSelector: @selector(didEndSheet:returnCode:contextInfo:)
-          contextInfo: nil];
-    
-    [addToBlockLock unlock];  
-
-=======
   }
 }
 
@@ -343,7 +227,6 @@
         contextInfo: nil];
   
   [addToBlockLock unlock];  
->>>>>>> Status Bar
 }
 
 - (IBAction) closeAddSheet:(id)sender {
@@ -362,24 +245,11 @@
 
 // see updateTimerDisplay: for an explanation
 - (void)resetStrikes {
-<<<<<<< HEAD
-    numStrikes = 0;
-   // NSLog(@"Resetting Strikes ");
-
-}
-
-- (void)runCheckup {
-    [NSTask launchedTaskWithLaunchPath: @"/Library/PrivilegedHelperTools/scheckup" arguments: [NSArray array]];
-    [self resetStrikes];
-  //  NSLog(@"Running Checkup ");
-
-=======
   numStrikes = 0;
 }
 
 - (void)runCheckup {
   [NSTask launchedTaskWithLaunchPath: @"/Library/PrivilegedHelperTools/scheckup" arguments: [NSArray array]];
->>>>>>> Status Bar
 }
 
 - (void)dealloc {

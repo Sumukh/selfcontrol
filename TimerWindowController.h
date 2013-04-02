@@ -32,11 +32,6 @@
   NSTimer* timerUpdater_;
   NSDate* blockEndingDate_;
   NSLock* addToBlockLock;
-<<<<<<< HEAD
-  BOOL isLeopard;
-  BOOL isLion;
-=======
->>>>>>> Status Bar
   int numStrikes;
     IBOutlet NSMenu *statusMenu;
     IBOutlet NSMenuItem *timeleft;
